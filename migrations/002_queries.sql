@@ -13,17 +13,21 @@
 --     password_hash is computed in Node BEFORE this runs:
 --       argon2.hash(password)   or   bcrypt.hash(password, 12)
 --     Never send a plain password to PostgreSQL.
-insert into users (email, password_hash, full_name, business_name, account_type)
-values ($1, $2, $3, $4, $5)
+--     phone_number (added in 003) is E.164, normalised in Node first.
+insert into users (email, password_hash, phone_number, full_name, business_name, account_type)
+values ($1, $2, $3, $4, $5, $6)
 returning id, email, created_at;
 
 -- If this raises unique_violation (code 23505) on idx_users_email_active,
--- the email is already taken by a live account.
+-- the email is already taken by a live account. On idx_users_phone_active,
+-- the phone number is. Treat both the same way, as below.
 --
--- Do NOT reply "email already registered" -- that confirms to a stranger
--- which emails have accounts. Send the same "check your inbox" response
--- as a success, and email the existing owner a "someone tried to sign up
--- with your address" notice instead.
+-- The app splits sign-up from sign-in, so register looks the email up
+-- first (live rows only):
+--   verified   -> 409 "An account with this email already exists. Sign in instead."
+--   unverified -> update password_hash and phone_number, then send a new
+--                 OTP (section 2), cooldown included.
+-- A 23505 on idx_users_phone_active -> 409 for the phone number.
 
 
 -- =====================================================================
@@ -136,8 +140,8 @@ where email = $1
 --        -> 403 "Account suspended, contact support"
 --
 --   4. email_verified_at is null
---        -> 403 { code: 'EMAIL_NOT_VERIFIED' }
---           Flutter routes to the OTP screen and triggers a resend.
+--        -> 403 details { reason: 'EMAIL_NOT_VERIFIED' }, no resend.
+--           The app tells the user to sign up again for a new code.
 --
 --   5. status = 'active' and verified
 --        -> issue tokens (section 5)
@@ -225,10 +229,12 @@ commit;
 -- 7. LOGOUT
 -- =====================================================================
 
--- 7a. This device only.
+-- 7a. This device only: revoke the presented token's whole family, so a
+--     rotated successor can't outlive the logout. Unknown token -> no-op;
+--     the endpoint returns 204 either way.
 update refresh_tokens
 set revoked_at = now()
-where token_hash = $1
+where family_id = (select family_id from refresh_tokens where token_hash = $1)
   and revoked_at is null;
 
 -- 7b. All devices ("log out everywhere", password change).
@@ -259,11 +265,12 @@ where user_id = $1
 order by is_default desc, created_at desc;
 
 -- 8b. Add one. If it is the first address, make it the default.
+--     address_line and notes were added in 004; area and city became optional.
 insert into addresses
-  (user_id, label, flat_unit, society, area, city, state, pincode, landmark,
-   is_default)
+  (user_id, label, flat_unit, address_line, society, area, city, state,
+   pincode, landmark, notes, is_default)
 values
-  ($1, $2, $3, $4, $5, $6, $7, $8, $9,
+  ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
    not exists (select 1 from addresses
                where user_id = $1 and deleted_at is null))
 returning id;

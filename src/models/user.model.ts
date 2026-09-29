@@ -21,6 +21,7 @@ export class User extends Model<InferAttributes<User>, InferCreationAttributes<U
     declare id: CreationOptional<string>;
     declare email: string; // citext, so comparisons ignore case
     declare passwordHash: string; // argon2id / bcrypt, never the plain password
+    declare phoneNumber: string; // E.164, e.g. '+919876543210'
     declare emailVerifiedAt: CreationOptional<Date | null>;
     declare fullName: CreationOptional<string | null>;
     declare businessName: CreationOptional<string | null>;
@@ -46,6 +47,11 @@ export const initUser = (sequelize: Sequelize): typeof User => {
             id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
             email: { type: DataTypes.CITEXT, allowNull: false },
             passwordHash: { type: DataTypes.TEXT, allowNull: false },
+            phoneNumber: {
+                type: DataTypes.TEXT,
+                allowNull: false,
+                validate: { is: /^\+[1-9][0-9]{7,14}$/ },
+            },
             emailVerifiedAt: { type: DataTypes.DATE, allowNull: true },
             fullName: { type: DataTypes.TEXT, allowNull: true },
             businessName: { type: DataTypes.TEXT, allowNull: true },
