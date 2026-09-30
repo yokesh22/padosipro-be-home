@@ -1,18 +1,10 @@
-// import { Sequelize } from 'sequelize';
-// import config from './index.js';
-
-// const sequelize = new Sequelize(config.db.name, config.db.user, config.db.password, {
-//     host: config.db.host,
-//     port: config.db.port,
-//     dialect: 'postgres',
-//     logging: config.db.logging ? console.log : false,
-// });
-
-// export default sequelize;
-
 import { Sequelize } from 'sequelize';
 
 import config from './index.js';
+
+// Development talks to a local Postgres without SSL. Production talks to Neon,
+// which rejects non-SSL connections.
+const useSsl = config.env === 'production';
 
 const sequelize = new Sequelize(
     config.db.name,
@@ -25,7 +17,7 @@ const sequelize = new Sequelize(
 
         logging: config.db.logging ? console.log : false,
 
-        dialectOptions: config.env === 'production'
+        dialectOptions: useSsl
             ? {
                 ssl: {
                     require: true,

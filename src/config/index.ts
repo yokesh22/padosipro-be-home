@@ -12,6 +12,7 @@ const config = {
         user: process.env.DB_USER ?? '',
         password: process.env.DB_PASSWORD ?? '',
         logging: process.env.DB_LOGGING === 'true',
+        ssl: process.env.DB_SSL === 'true',
     },
     brevo: {
         apiKey: process.env.BREVO_API_KEY ?? '',
