@@ -3,6 +3,7 @@ import { initUser } from './user.model.js';
 import { initAddress } from './address.model.js';
 import { initEmailVerificationCode } from './emailVerificationCode.model.js';
 import { initRefreshToken } from './refreshToken.model.js';
+import { initTask } from './task.model.js';
 
 // Register every model here
 const models = {
@@ -10,6 +11,7 @@ const models = {
     Address: initAddress(sequelize),
     EmailVerificationCode: initEmailVerificationCode(sequelize),
     RefreshToken: initRefreshToken(sequelize),
+    Task: initTask(sequelize),
 };
 
 export type Models = typeof models;
@@ -20,4 +22,4 @@ Object.values(models).forEach((model) => {
 });
 
 export { sequelize, models };
-export const { User, Address, EmailVerificationCode, RefreshToken } = models;
+export const { User, Address, EmailVerificationCode, RefreshToken, Task } = models;

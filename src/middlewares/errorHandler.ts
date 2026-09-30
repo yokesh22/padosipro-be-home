@@ -28,7 +28,7 @@ const errorHandler: ErrorRequestHandler = (err: unknown, _req, res, _next) => {
         statusCode,
         message: statusCode >= 500 && isProduction ? 'Internal Server Error' : error.message,
         error: {
-            code: statusCodeToErrorCode(statusCode),
+            code: (error instanceof ApiError && error.code) || statusCodeToErrorCode(statusCode),
             ...(error instanceof ApiError && error.details !== undefined && { details: error.details }),
             ...(!isProduction && error.stack !== undefined && { stack: error.stack }),
         },

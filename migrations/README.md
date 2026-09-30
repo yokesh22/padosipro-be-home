@@ -19,6 +19,7 @@ NNN_short_description.sql
 | `002_queries.sql` | n/a | **Not a migration.** Reference SQL for the runtime flows (register, OTP, login, refresh, logout, addresses, disable, soft delete, cleanup). Never run it. |
 | `003_add_phone_to_users.sql` | yes | `users.phone_number` (text, NOT NULL, E.164 check) and partial unique index `idx_users_phone_active` on live rows |
 | `004_address_line_and_notes.sql` | yes | `addresses.address_line` and `addresses.notes` (text, nullable); `area` and `city` made nullable |
+| `005_tasks.sql` | local dev only | Table `tasks` (user's service requests), index `(user_id, status, created_at desc)`, `updated_at` trigger |
 
 ## Rules
 

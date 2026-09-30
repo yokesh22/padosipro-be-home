@@ -37,6 +37,7 @@ export class Address extends Model<InferAttributes<Address>, InferCreationAttrib
 
     static associate(models: Models): void {
         Address.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+        Address.hasMany(models.Task, { foreignKey: 'addressId', as: 'tasks' });
     }
 }
 

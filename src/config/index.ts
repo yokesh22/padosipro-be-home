@@ -5,6 +5,9 @@ dotenv.config({ quiet: true });
 const config = {
     env: process.env.NODE_ENV ?? 'development',
     port: Number(process.env.PORT) || 3000,
+    // Calendar used for "today" (e.g. the 7-day window for scheduled tasks).
+    // The app's users are in India, so this doesn't follow the server's zone.
+    timeZone: process.env.APP_TIME_ZONE ?? 'Asia/Kolkata',
     db: {
         host: process.env.DB_HOST ?? 'localhost',
         port: Number(process.env.DB_PORT) || 5432,

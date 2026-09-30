@@ -38,6 +38,7 @@ export class User extends Model<InferAttributes<User>, InferCreationAttributes<U
         User.hasMany(models.Address, { foreignKey: 'userId', as: 'addresses' });
         User.hasMany(models.EmailVerificationCode, { foreignKey: 'userId', as: 'emailVerificationCodes' });
         User.hasMany(models.RefreshToken, { foreignKey: 'userId', as: 'refreshTokens' });
+        User.hasMany(models.Task, { foreignKey: 'userId', as: 'tasks' });
     }
 }
 

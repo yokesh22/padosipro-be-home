@@ -23,7 +23,7 @@ Apply the migrations in order (skip `002_queries.sql`, which is reference SQL on
 
 ```bash
 set -a; source .env; set +a
-for f in 001_schema 003_add_phone_to_users 004_address_line_and_notes; do
+for f in 001_schema 003_add_phone_to_users 004_address_line_and_notes 005_tasks; do
   PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" \
     -v ON_ERROR_STOP=1 -f "migrations/$f.sql"
 done
@@ -52,6 +52,7 @@ The server checks the DB connection before listening on `PORT` (default `3000`).
 | `BREVO_API_KEY`, `MAIL_FROM_EMAIL`, `MAIL_FROM_NAME` | Transactional email |
 | `OTP_PEPPER` | HMAC secret for hashing OTP codes |
 | `JWT_ACCESS_SECRET` | Signs access tokens |
+| `APP_TIME_ZONE` | Calendar for "today" in the scheduled-task window (default `Asia/Kolkata`) |
 
 ## API
 
@@ -70,6 +71,19 @@ Every response uses the same envelope:
 { "success": false, "statusCode": 400, "message": "flatUnit is required",
   "error": { "code": "BAD_REQUEST", "details": { ... } } }
 ```
+
+### Tasks
+
+All `/tasks` routes need `Authorization: Bearer <accessToken>` and only ever see the caller's own tasks.
+
+| Route | Does |
+|---|---|
+| `POST /tasks` | Create a request: `{ category, helpType, service, timing, day?, slot?, details }`. `day` (today to today + 6, `YYYY-MM-DD`) and `slot` (`morning`/`afternoon`/`evening`) are required when `timing` is `scheduled` and ignored otherwise. 201 |
+| `GET /tasks` | `?status=pending,assigned` (or `active`), `?limit=` (default 20, max 50), `?cursor=` from the previous page. Newest first. Returns `{ items, nextCursor }` |
+| `GET /tasks/:id` | One task, or 404 `TASK_NOT_FOUND` |
+| `PATCH /tasks/:id/cancel` | Cancel while `pending` or `assigned`, else 409 `TASK_NOT_CANCELLABLE` |
+
+Validation errors are 400 with `error.code = "VALIDATION_ERROR"` and per-field messages in `error.details`.
 
 Common status codes: `400` invalid input, `401` bad credentials or token, `403` suspended/unverified account, `404` not found, `409` email or phone taken, `429` too many login attempts (5 per email+IP per 15 min).
 

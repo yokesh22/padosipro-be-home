@@ -15,7 +15,7 @@ export interface ErrorResponse {
     statusCode: number;
     message: string;
     error: {
-        code: string; // e.g. 'BAD_REQUEST', derived from the status code
+        code: string; // e.g. 'BAD_REQUEST', derived from the status code unless ApiError sets one
         details?: unknown;
         stack?: string;
     };
